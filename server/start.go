@@ -750,7 +750,7 @@ func testnetify(ctx *Context, testnetAppCreator types.AppCreator, db dbm.DB, tra
 	}
 
 	// Load the comet genesis doc provider.
-	genDocProvider := node.DefaultGenesisDocProviderFunc(config)
+	// genDocProvider := node.DefaultGenesisDocProviderFunc(config)
 
 	// Initialize blockStore and stateDB.
 	blockStoreDB, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "blockstore", Config: config})
@@ -778,7 +778,23 @@ func testnetify(ctx *Context, testnetAppCreator types.AppCreator, db dbm.DB, tra
 		DiscardABCIResponses: config.Storage.DiscardABCIResponses,
 	})
 
-	state, genDoc, err := node.LoadStateFromDBOrGenesisDocProvider(stateDB, genDocProvider)
+	// state, genDoc, err := node.loadStateFromDBOrGenesisDoc(stateStore, stateDB, genDocProvider)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	genesisDocProvider := node.DefaultGenesisDocProviderFunc(config)
+	genDoc, err := genesisDocProvider()
+	if err != nil {
+		return nil, err
+	}
+
+	err = genDoc.ValidateAndComplete()
+	if err != nil {
+		return nil, fmt.Errorf("error in genesis doc: %w", err)
+	}
+
+	state, err := node.LoadStateFromDBOrGenesisDoc(stateStore, stateDB, genDoc)
 	if err != nil {
 		return nil, err
 	}
